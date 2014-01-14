@@ -2,7 +2,7 @@ INCLUDES=$(HOME)/local/include
 LIBPATH=$(HOME)/local/lib
 LDFLAGS=-lm -ldl
 
-ALL = sin dir summation table.pack reverse mylib.so
+ALL = sin dir summation table.pack reverse foreach mylib.so
 
 all: $(ALL)
 
@@ -19,6 +19,9 @@ table.pack: table.pack.c
 	gcc -I $(INCLUDES) -L $(LIBPATH) -o $@ $< -llua $(LDFLAGS)
 
 reverse: reverse.c
+	gcc -I $(INCLUDES) -L $(LIBPATH) -o $@ $< -llua $(LDFLAGS)
+
+foreach: foreach.c
 	gcc -I $(INCLUDES) -L $(LIBPATH) -o $@ $< -llua $(LDFLAGS)
 
 mylib.so: mylib.c
