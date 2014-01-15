@@ -1,6 +1,18 @@
 #include <lua.h>
 #include <lauxlib.h>
 
+static int l_upper(lua_State *L) {
+	size_t l, i;
+	luaL_Buffer b;
+	const char *s = luaL_checklstring(L, 1, &l);
+	char *p = luaL_buffinitsize(L, &b, l);
+	for (i = 0; i < l; i++)
+		p[i] = toupper((unsigned char)(s[i]));
+	luaL_pushresultsize(&b, l);
+
+	return 1;
+}
+
 static int l_map(lua_State *L) {
 	int i, n;
 	luaL_checktype(L, 1, LUA_TTABLE);
@@ -19,6 +31,7 @@ static int l_map(lua_State *L) {
 
 static struct luaL_Reg ch28_functions[] = {
 	{ "map", l_map },
+	{ "upper", l_upper },
 	{ NULL, NULL }
 };
 
