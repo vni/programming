@@ -14,3 +14,9 @@ print(lib.upper("Hello world"))
 
 print("\nlib.concat({10, \"hello\", \"world\", 20})")
 print(lib.concat({10, "hello", "world", 20}))
+
+print("\nlib.newCounter():")
+c = lib.newCounter()
+print(c())
+print(c())
+print(c())

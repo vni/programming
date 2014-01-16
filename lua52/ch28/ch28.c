@@ -1,6 +1,20 @@
 #include <lua.h>
 #include <lauxlib.h>
 
+static int counter(lua_State *L) {
+	int val = lua_tointeger(L, lua_upvalueindex(1));
+	lua_pushinteger(L, ++val);
+	lua_pushvalue(L, -1);
+	lua_replace(L, lua_upvalueindex(1));
+	return 1;
+}
+
+static int l_newCounter(lua_State *L) {
+	lua_pushinteger(L, 0);
+	lua_pushcclosure(L, &counter, 1);
+	return 1;
+}
+
 static int l_tconcat(lua_State *L) {
 	luaL_Buffer b;
 	int i, n;
@@ -44,6 +58,7 @@ static int l_map(lua_State *L) {
 }
 
 static struct luaL_Reg ch28_functions[] = {
+	{ "newCounter", l_newCounter },
 	{ "concat", l_tconcat },
 	{ "upper", l_upper },
 	{ "map", l_map },
