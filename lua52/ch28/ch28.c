@@ -1,3 +1,4 @@
+#include <string.h>
 #include <lua.h>
 #include <lauxlib.h>
 
@@ -57,11 +58,31 @@ static int l_map(lua_State *L) {
 	return 0;
 }
 
+static int l_split(lua_State *L) {
+	const char *s = luaL_checkstring(L, 1);
+	const char *sep = luaL_checkstring(L, 2);
+	const char *e;
+	int i = 1;
+
+	lua_newtable(L);
+
+	while ((e = strchr(s, *sep)) != NULL) {
+		lua_pushlstring(L, s, e-s);
+		lua_rawseti(L, -2, i++);
+		s = e+1;
+	}
+	lua_pushstring(L, s);
+	lua_rawseti(L, -2, i);
+
+	return 1;
+}
+
 static struct luaL_Reg ch28_functions[] = {
 	{ "newCounter", l_newCounter },
 	{ "concat", l_tconcat },
 	{ "upper", l_upper },
 	{ "map", l_map },
+	{ "split", l_split },
 	{ NULL, NULL }
 };
 

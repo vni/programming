@@ -1,5 +1,5 @@
 INCPATH = $(HOME)/local/include
-ALL = ch28.so tuple.so shared_upvalues.so single_shared_upvalue.so
+ALL = ch28.so tuple.so shared_upvalues.so single_shared_upvalue.so exercies.so
 
 all: $(ALL)
 
@@ -13,6 +13,9 @@ shared_upvalues.so: shared_upvalues.c
 	gcc -shared -fPIC -Wl,-soname,$@ -I$(INCPATH) -o $@ $<
 
 single_shared_upvalue.so: single_shared_upvalue.c
+	gcc -shared -fPIC -Wl,-soname,$@ -I$(INCPATH) -o $@ $<
+
+exercies.so: exercies.c
 	gcc -shared -fPIC -Wl,-soname,$@ -I$(INCPATH) -o $@ $<
 
 clean:

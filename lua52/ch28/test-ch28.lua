@@ -9,6 +9,13 @@ for _,v in ipairs(t) do
 	print(v)
 end
 
+print("\nlib.split(\"hi:ho:there\", \":\")")
+s = lib.split("hi:ho:there", ":")
+for i=1,#s do
+	io.write(s[i], '\t')
+end
+print()
+
 print("\nlib.upper(\"Hello world\"):")
 print(lib.upper("Hello world"))
 
