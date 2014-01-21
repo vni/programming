@@ -13,3 +13,19 @@ for i=1,#t do
 	io.write(t[i], '    ')
 end
 io.write('\n')
+
+print("ex.split(\"hi\\0001:ho\\00023333:there\", \":\")")
+t = ex.split("hi\0001:ho\00023333:there", ":")
+for i=1,#t do
+	io.write(t[i], '\t')
+	--print(#t[i], t[i]) 
+end
+io.write('\n')
+
+print("ex.split(\"hi\\0ho\\0there\\0\", \"\\0\")")
+t = ex.split("hi\0ho\0there\0", "\0")
+for i=1,#t do
+	--io.write(t[i], '\t')
+	print(#t[i], t[i]) 
+end
+--io.write('\n')
