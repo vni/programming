@@ -1,5 +1,5 @@
 INCPATH = $(HOME)/local/include
-ALL = ch28.so tuple.so shared_upvalues.so single_shared_upvalue.so exercies.so registry_transliterate.so
+ALL = ch28.so tuple.so shared_upvalues.so single_shared_upvalue.so exercies.so registry_transliterate.so upvalue_transliterate.so
 
 all: $(ALL)
 
@@ -19,6 +19,9 @@ exercies.so: exercies.c
 	gcc -shared -fPIC -Wl,-soname,$@ -I$(INCPATH) -o $@ $<
 
 registry_transliterate.so: registry_transliterate.c
+	gcc -shared -fPIC -Wl,-soname,$@ -I$(INCPATH) -o $@ $<
+
+upvalue_transliterate.so: upvalue_transliterate.c
 	gcc -shared -fPIC -Wl,-soname,$@ -I$(INCPATH) -o $@ $<
 
 clean:
