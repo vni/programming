@@ -29,3 +29,8 @@ for i=1,#t do
 	print(#t[i], t[i]) 
 end
 --io.write('\n')
+
+input = 'abcd xyz abcd'
+print(input)
+res = ex.transliterate(input, {a="b", b="c", c="d", d=false})
+print(res)
