@@ -1,4 +1,4 @@
-ALL=first hello use-printf
+ALL=first hello use-printf dump-regs
 
 all: $(ALL)
 
@@ -11,6 +11,10 @@ hello: hello.asm
 	ld -melf_i386 $@.o -o $@
 
 use-printf: use-printf.asm
+	nasm -f elf $< -l $@.listing
+	gcc -o $@ -m32 $@.o
+
+dump-regs: dump-regs.asm
 	nasm -f elf $< -l $@.listing
 	gcc -o $@ -m32 $@.o
 
