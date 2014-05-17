@@ -1,5 +1,5 @@
 CFLAGS=-m32 -g
-ALL = movzx movsx cbw fgets cmp cmp-carry
+ALL = movzx movsx cbw fgets cmp cmp-carry adc add
 
 all: $(ALL)
 
@@ -23,6 +23,14 @@ cmp: cmp.asm
 	gcc $(CFLAGS) -o $@ $@.o
 
 cmp-carry: cmp-carry.asm
+	nasm -f elf $< -l $@.listing
+	gcc $(CFLAGS) -o $@ $@.o
+
+adc: adc.asm
+	nasm -f elf $< -l $@.listing
+	gcc $(CFLAGS) -o $@ $@.o
+
+add: add.asm
 	nasm -f elf $< -l $@.listing
 	gcc $(CFLAGS) -o $@ $@.o
 
