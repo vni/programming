@@ -1,5 +1,5 @@
 CFLAGS=-m32 -g
-ALL = movzx movsx cbw fgets cmp cmp-carry adc add
+ALL = movzx movsx cbw fgets cmp cmp-carry adc add math prime prime-c
 
 all: $(ALL)
 
@@ -33,6 +33,18 @@ adc: adc.asm
 add: add.asm
 	nasm -f elf $< -l $@.listing
 	gcc $(CFLAGS) -o $@ $@.o
+
+math: math.asm
+	nasm -f elf $< -l $@.listing
+	gcc $(CFLAGS) -o $@ $@.o asm_io.o driver.c
+
+prime: prime.asm
+	nasm -f elf $< -l $@.listing
+	gcc $(CFLAGS) -o $@ $@.o asm_io.o driver.c
+
+prime-c: prime.c
+	gcc $(CFLAGS) -o $@ $<
+
 
 clean:
 	rm -f core* *.o *.listing $(ALL)
