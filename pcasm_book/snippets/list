@@ -1,0 +1,42 @@
+     1                                  segment .data
+     2 00000000 010000000200000003-     array1	dd	1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+     3 00000009 000000040000000500-
+     4 00000012 000006000000070000-
+     5 0000001B 000800000009000000-
+     6 00000024 0A000000           
+     7 00000028 25640A00                format	db	"%d", 10, 0
+     8                                  
+     9                                  segment .bss
+    10 00000000 <res 00000028>          array2	resd	10
+    11                                  
+    12                                  segment .text
+    13                                  	extern printf
+    14                                  	global main
+    15                                  main:
+    16 00000000 55                      	push	ebp
+    17 00000001 89E5                    	mov	ebp, esp
+    18                                  
+    19 00000003 FC                      	cld
+    20 00000004 BE[00000000]            	mov	esi, array1
+    21 00000009 BF[00000000]            	mov	edi, array2
+    22 0000000E B90A000000              	mov	ecx, 10
+    23                                  lp:
+    24 00000013 A5                      	movsd
+    25 00000014 E2FD                    	loop lp
+    26                                  
+    27 00000016 BE[00000000]            	mov	esi, array2
+    28 0000001B B90A000000              	mov	ecx, 10
+    29                                  print_loop:
+    30 00000020 51                      	push	ecx
+    31 00000021 AD                      	lodsd
+    32 00000022 50                      	push	eax
+    33 00000023 68[28000000]            	push	format
+    34 00000028 E8(00000000)            	call	printf
+    35 0000002D 83C408                  	add	esp, 8
+    36 00000030 59                      	pop	ecx
+    37 00000031 E2ED                    	loop print_loop
+    38                                  
+    39 00000033 B800000000              	mov	eax, 0
+    40 00000038 89EC                    	mov	esp, ebp
+    41 0000003A 5D                      	pop	ebp
+    42 0000003B C3                      	ret

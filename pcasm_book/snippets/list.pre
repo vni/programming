@@ -1,0 +1,43 @@
+     1                                  segment .data
+     2 00000000 010000000200000003-     array1	dd	1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+     3 00000009 000000040000000500-
+     4 00000012 000006000000070000-
+     5 0000001B 000800000009000000-
+     6 00000024 0A000000           
+     7 00000028 25640A00                format	db	"%d", 10, 0
+     8                                  
+     9                                  segment .bss
+    10 00000000 <res 00000028>          array2	resd	10
+    11                                  
+    12                                  segment .text
+    13                                  	extern printf
+    14                                  	global main
+    15                                  main:
+    16 00000000 55                      	push	ebp
+    17 00000001 89E5                    	mov	ebp, esp
+    18                                  
+    19 00000003 FC                      	cld
+    20 00000004 BE[00000000]            	mov	esi, array1
+    21 00000009 BF[00000000]            	mov	edi, array2
+    22 0000000E B90A000000              	mov	ecx, 10
+    23                                  lp:
+    24 00000013 AD                      	lodsd
+    25 00000014 AB                      	stosd
+    26 00000015 E2FC                    	loop lp
+    27                                  
+    28 00000017 BE[00000000]            	mov	esi, array2
+    29 0000001C B90A000000              	mov	ecx, 10
+    30                                  print_loop:
+    31 00000021 51                      	push	ecx
+    32 00000022 AD                      	lodsd
+    33 00000023 50                      	push	eax
+    34 00000024 68[28000000]            	push	format
+    35 00000029 E8(00000000)            	call	printf
+    36 0000002E 83C408                  	add	esp, 8
+    37 00000031 59                      	pop	ecx
+    38 00000032 E2ED                    	loop print_loop
+    39                                  
+    40 00000034 B800000000              	mov	eax, 0
+    41 00000039 89EC                    	mov	esp, ebp
+    42 0000003B 5D                      	pop	ebp
+    43 0000003C C3                      	ret
