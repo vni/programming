@@ -11,11 +11,7 @@ typedef unsigned int uint32;
 typedef unsigned long long uint64;
 
 #define BLOCK_SIZE 64
-/*#define ROTATE(value, s) ((value << s) | (value >> (32 - s)))*/
-
-uint32 ROTATE(uint32 value, uint32 s) {
-	return ((value << s) | (value >> (32 - s)));
-}
+#define ROTATE(value, s) ((value << s) | (value >> (32 - s)))
 
 typedef struct {
 	uint32 h[5];
