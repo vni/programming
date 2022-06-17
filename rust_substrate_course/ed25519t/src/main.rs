@@ -22,6 +22,13 @@ fn generate() {
     println!("private key: {}", utils::u8_to_string(&keypair.secret.to_bytes()));
 }
 
+fn generate_bs58() {
+    let mut rng = rand::rngs::OsRng;
+    let keypair: Keypair = Keypair::generate(&mut rng);
+    println!("public key:  {}", bs58::encode(&keypair.public.to_bytes()).into_string());
+    println!("private key: {}", bs58::encode(&keypair.secret.to_bytes()).into_string());
+}
+
 fn sign(public: PublicKey, private: SecretKey, message: String) -> Signature {
     let keypair = Keypair { secret: private, public: public };
     let mut prehash: Sha512 = Sha512::default();
@@ -45,6 +52,9 @@ fn main() {
     match options.cmd.as_str() {
         "generate" => {
             generate();
+        }
+        "generate-bs58" => {
+            generate_bs58();
         }
         "sign" => {
             if options.private_key.is_none() {

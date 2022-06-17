@@ -13,15 +13,15 @@ use ed25519_dalek::{
     KEYPAIR_LENGTH,
 };
 
-pub struct CommandLineOptions {
-    pub cmd: String,
-    pub public_key: Option<PublicKey>,
-    pub private_key: Option<SecretKey>,
-    pub message: Option<String>,
-    pub signature: Option<Signature>,
+pub(crate) struct CommandLineOptions {
+    pub(crate) cmd: String,
+    pub(crate) public_key: Option<PublicKey>,
+    pub(crate) private_key: Option<SecretKey>,
+    pub(crate) message: Option<String>,
+    pub(crate) signature: Option<Signature>,
 }
 
-pub fn u8_to_string(a: &[u8]) -> String {
+pub(crate) fn u8_to_string(a: &[u8]) -> String {
     let mut s = String::with_capacity(a.len() + 1);
     for v in a.iter() {
         write!(s, "{:02x}", v).unwrap();
@@ -29,7 +29,7 @@ pub fn u8_to_string(a: &[u8]) -> String {
     s
 }
 
-pub fn parse_command_line_args() -> CommandLineOptions {
+pub(crate) fn parse_command_line_args() -> CommandLineOptions {
     let mut opts = CommandLineOptions {
         cmd: String::new(),
         public_key: None,
@@ -59,6 +59,18 @@ pub fn parse_command_line_args() -> CommandLineOptions {
             opts.public_key = Some(pubkey);
 
             i += 2;
+        } else if args[i] == "--public-bs58" {
+            if i + 1 >= n {
+                panic!("--public-bs58 expects an argument which is missing");
+            }
+
+            let pubkey = args[i + 1].clone();
+            let pubkey = bs58::decode(pubkey).into_vec().unwrap();
+            let pubkey: PublicKey = PublicKey::from_bytes(&pubkey[..PUBLIC_KEY_LENGTH]).unwrap();
+
+            opts.public_key = Some(pubkey);
+
+            i += 2;
         } else if args[i] == "--private" {
             if i + 1 >= n {
                 panic!("--private expects an argument which is missing");
@@ -67,6 +79,18 @@ pub fn parse_command_line_args() -> CommandLineOptions {
             let privkey = args[i + 1].clone();
             let privkey = hex::decode(privkey).unwrap();
             let privkey: SecretKey = SecretKey::from_bytes(&privkey[..SECRET_KEY_LENGTH]).unwrap();
+            opts.private_key = Some(privkey);
+
+            i += 2;
+        } else if args[i] == "--private-bs58" {
+            if i + 1 >= n {
+                panic!("--private-bs58 expects an argument which is missing");
+            }
+
+            let privkey = args[i + 1].clone();
+            let privkey = bs58::decode(privkey).into_vec().unwrap();
+            let privkey: SecretKey = SecretKey::from_bytes(&privkey[..SECRET_KEY_LENGTH]).unwrap();
+
             opts.private_key = Some(privkey);
 
             i += 2;
@@ -87,6 +111,18 @@ pub fn parse_command_line_args() -> CommandLineOptions {
             let signature = args[i + 1].clone();
             let signature = hex::decode(signature).unwrap();
             let signature: Signature = Signature::from_bytes(&signature[..64]).unwrap();
+            opts.signature = Some(signature);
+
+            i += 2;
+        } else if args[i] == "--signature-bs58" {
+            if i + 1 >= n {
+                panic!("--signature-bs58 expects an argument which is missing");
+            }
+
+            let signature = args[i + 1].clone();
+            let signature = bs58::decode(signature).into_vec().unwrap();
+            let signature: Signature = Signature::from_bytes(&signature[..64]).unwrap();
+
             opts.signature = Some(signature);
 
             i += 2;
