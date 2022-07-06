@@ -18,41 +18,29 @@
     (loop
       (local.set $t (i32.load8_u (local.get $p)))
 
-      local.get $t
-      i32.const 65 ;; 'A'
-      i32.eq
-      (if (then local.get $p
+      (if (i32.eq (local.get $t) (i32.const 65 (;'A';)))
+          (then local.get $p
                 i32.const 85 ;; 'U'
                 i32.store8))
 
-      local.get $t
-      i32.const 67 ;; 'C'
-      i32.eq
-      (if (then local.get $p
+      (if (i32.eq (local.get $t) (i32.const 67 (;'C';)))
+          (then local.get $p
                 i32.const 71 ;; 'G'
                 i32.store8))
 
-      local.get $t
-      i32.const 71 ;; 'G'
-      i32.eq
-      (if (then local.get $p
+      (if (i32.eq (local.get $t) (i32.const 71 (;'G';)))
+          (then local.get $p
                 i32.const 67 ;; 'C'
                 i32.store8))
 
-      local.get $t
-      i32.const 84 ;; 'T'
-      i32.eq
-      (if (then local.get $p
+      (if (i32.eq (local.get $t) (i32.const 84 (;'T';)))
+          (then local.get $p
                 i32.const 65 ;; 'A'
                 i32.store8))
 
       ;; ++$p < $end
-      local.get $p
-      i32.const 1
-      i32.add
-      local.tee $p
-      local.get $end
-      i32.lt_u
+      (i32.lt_u (local.tee $p (i32.add (local.get $p) (i32.const 1)))
+                (local.get $end))
       br_if 0)
 
     (return (local.get $offset) (local.get $length))
