@@ -11,20 +11,17 @@ pub enum LogLevel {
     Debug,
 }
 
-impl std::fmt::Display for LogLevel {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            LogLevel::Info => write!(f, "INFO"),
-            LogLevel::Warning => write!(f, "WARNING"),
-            LogLevel::Error => write!(f, "ERROR"),
-            LogLevel::Debug => write!(f, "DEBUG"),
-        }
-    }
-}
-
 /// primary function for emitting logs
 pub fn log(level: LogLevel, message: &str) -> String {
-    format!("[{level}]: {message}")
+    format!(
+        "[{}]: {message}",
+        match level {
+            LogLevel::Info => "INFO",
+            LogLevel::Warning => "WARNING",
+            LogLevel::Error => "ERROR",
+            LogLevel::Debug => "DEBUG",
+        }
+    )
 }
 pub fn info(message: &str) -> String {
     log(LogLevel::Info, message)
