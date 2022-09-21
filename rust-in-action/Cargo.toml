@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "ch08",
+    "ch08-mget",
+    "ch09",
+    "ch10",
+    "ch11",
+]
