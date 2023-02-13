@@ -1,0 +1,25 @@
+{
+  "blurb": "Implement zero-copy streaming adaptors",
+  "source": "Peter Goodspeed-Niklaus",
+  "authors": [
+    "coriolinus"
+  ],
+  "contributors": [
+    "cwhakes",
+    "efx",
+    "ErikSchierboom",
+    "petertseng",
+    "snoyberg"
+  ],
+  "files": {
+    "solution": [
+      "src/lib.rs"
+    ],
+    "test": [
+      "tests/xorcism.rs"
+    ],
+    "example": [
+      ".meta/example.rs"
+    ]
+  }
+}
