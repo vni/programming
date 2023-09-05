@@ -1,91 +1,134 @@
 use std::io::{self, Read, Write};
-use std::net::{TcpListener, TcpStream};
+use std::net::TcpListener;
+
+enum ConnectionState {
+    Read {
+        request: [u8; 1024],
+        read: usize,
+    },
+    Write {
+        response: &'static [u8],
+        written: usize,
+    },
+    Flush,
+}
 
 fn main() {
     let listener = TcpListener::bind("localhost:3000").unwrap();
+    listener
+        .set_nonblocking(true)
+        .expect("Failed to set_nonblocking(true) on a listener");
+
     let mut connection_counter = 0;
+    let mut connections = Vec::new();
+
     loop {
-        let (connection, _) = listener.accept().unwrap();
+        match listener.accept() {
+            Ok((connection, _)) => {
+                connection
+                    .set_nonblocking(true)
+                    .expect("Failed to set_nonblocking(true) on a connection");
+
+                let state = ConnectionState::Read {
+                    request: [0u8; 1024],
+                    read: 0,
+                };
+
+                connections.push((connection, state));
+            }
+            Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+                // std::thread::sleep(std::time::Duration::from_millis(100));
+                // continue;
+            }
+            Err(e) => panic!("{e}"),
+        };
+
         println!(
             "main> new connection> connection_counter: {}",
             connection_counter
         );
 
-        std::thread::spawn(|| {
-            if let Err(e) = handle_connection(connection) {
-                println!("failed to handle connection: {e}")
+        let mut completed = Vec::new();
+
+        'next: for (i, (connection, state)) in connections.iter_mut().enumerate() {
+            if let ConnectionState::Read { request, read } = state {
+                loop {
+                    match connection.read(&mut request[*read..]) {
+                        Ok(0) => {
+                            println!("client disconnected unexpectedly");
+                            completed.push(i);
+                            continue 'next;
+                        }
+                        Ok(n) => *read += n,
+                        Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+                            continue 'next;
+                        }
+                        Err(e) => panic!("{e}"),
+                    }
+
+                    if request.get(*read - 4..*read) == Some(b"\r\n\r\n") {
+                        break;
+                    }
+                }
+
+                let request = String::from_utf8_lossy(&request[..*read]);
+                println!("{request}");
+
+                let response = concat!(
+                    "HTTP/1.1 200 OK\r\n",
+                    "Content-Length: 12\n",
+                    "Connection: close\r\n\r\n",
+                    "Hello world!"
+                );
+
+                *state = ConnectionState::Write {
+                    response: response.as_bytes(),
+                    written: 0,
+                };
             }
-        });
+
+            if let ConnectionState::Write { response, written } = state {
+                loop {
+                    match connection.write(&response[*written..]) {
+                        Ok(0) => {
+                            println!("client disconnected unexpectedly");
+                            completed.push(i);
+                            continue 'next;
+                        }
+                        Ok(n) => {
+                            *written += n;
+                        }
+                        Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+                            continue 'next;
+                        }
+                        Err(e) => panic!("{e}"),
+                    }
+
+                    if *written == response.len() {
+                        break;
+                    }
+                }
+
+                *state = ConnectionState::Flush;
+            }
+
+            if let ConnectionState::Flush = state {
+                match connection.flush() {
+                    Ok(_) => {
+                        completed.push(i);
+                    }
+                    Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+                        continue 'next;
+                    }
+                    Err(e) => panic!("{e}"),
+                }
+            }
+        }
+
+        for i in completed.into_iter().rev() {
+            connections.remove(i);
+        }
 
         connection_counter += 1;
     }
-}
-
-fn handle_connection(mut connection: TcpStream) -> io::Result<()> {
-    println!(">> got new connection from {:?}", connection);
-
-    let mut read = 0;
-    let mut request_buf = [0u8; 1024];
-
-    loop {
-        let num_bytes = connection.read(&mut request_buf[read..])?;
-        if num_bytes == 0 {
-            println!(">> client disconnected unexpectedly");
-            break;
-        }
-
-        print!(
-            "{:>4}: {}",
-            read,
-            std::str::from_utf8(&request_buf[read..read + num_bytes]).unwrap()
-        );
-
-        if request_buf.get(read + num_bytes - 4..read + num_bytes) == Some(b"\r\n\r\n") {
-            println!("***YEEESSSS*** \\r\\n\\r\\n");
-            break;
-        } else if request_buf.get(read..read + num_bytes) == Some(b"\n\n") {
-            println!("\\n\\n received");
-            break;
-        } else if request_buf.get(read..read + num_bytes) == Some(b".bye\n") {
-            println!(">> .bye received. closing connection.");
-            break;
-        }
-
-        read += num_bytes;
-    }
-
-    let request = String::from_utf8_lossy(&request_buf[..read]);
-    println!("{}", request);
-
-    let response = concat!(
-        "HTTP/1.1 200 OK\r\n",
-        "Content-Lengh: 12\n",
-        "Connection: close\r\n\r\n",
-        "Hello world!\n"
-    );
-
-    let mut written = 0;
-    loop {
-        let num_bytes = connection.write(response[written..].as_bytes())?;
-
-        if num_bytes == 0 {
-            println!(">> client disconnected unexpectedly");
-            break;
-        }
-
-        println!(
-            "wrote: {}",
-            std::str::from_utf8(response[written..written + num_bytes].as_bytes()).unwrap()
-        );
-
-        written += num_bytes;
-
-        if written == response.len() {
-            break;
-        }
-    }
-
-    connection.flush()
-
-    // Ok(())
 }
