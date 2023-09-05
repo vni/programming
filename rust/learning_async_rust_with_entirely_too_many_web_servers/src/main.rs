@@ -1,15 +1,23 @@
-use std::net::{TcpListener, TcpStream};
 use std::io::{self, Read, Write};
+use std::net::{TcpListener, TcpStream};
 
 fn main() {
     let listener = TcpListener::bind("localhost:3000").unwrap();
-
+    let mut connection_counter = 0;
     loop {
         let (connection, _) = listener.accept().unwrap();
+        println!(
+            "main> new connection> connection_counter: {}",
+            connection_counter
+        );
 
-        if let Err(e) = handle_connection(connection) {
-            println!("failed to handle connection: {e}")
-        }
+        std::thread::spawn(|| {
+            if let Err(e) = handle_connection(connection) {
+                println!("failed to handle connection: {e}")
+            }
+        });
+
+        connection_counter += 1;
     }
 }
 
@@ -26,16 +34,19 @@ fn handle_connection(mut connection: TcpStream) -> io::Result<()> {
             break;
         }
 
-        print!("{:>4}: {}", read,
-           std::str::from_utf8(&request_buf[read .. read+num_bytes]).unwrap());
+        print!(
+            "{:>4}: {}",
+            read,
+            std::str::from_utf8(&request_buf[read..read + num_bytes]).unwrap()
+        );
 
-        if request_buf.get(read + num_bytes - 4 .. read + num_bytes) == Some(b"\r\n\r\n") {
+        if request_buf.get(read + num_bytes - 4..read + num_bytes) == Some(b"\r\n\r\n") {
             println!("***YEEESSSS*** \\r\\n\\r\\n");
             break;
-        } else if request_buf.get(read .. read + num_bytes) == Some(b"\n\n") {
+        } else if request_buf.get(read..read + num_bytes) == Some(b"\n\n") {
             println!("\\n\\n received");
             break;
-        } else if request_buf.get(read .. read + num_bytes) == Some(b".bye\n") {
+        } else if request_buf.get(read..read + num_bytes) == Some(b".bye\n") {
             println!(">> .bye received. closing connection.");
             break;
         }
@@ -62,8 +73,10 @@ fn handle_connection(mut connection: TcpStream) -> io::Result<()> {
             break;
         }
 
-        println!("wrote: {}",
-             std::str::from_utf8(response[written .. written + num_bytes].as_bytes()).unwrap());
+        println!(
+            "wrote: {}",
+            std::str::from_utf8(response[written..written + num_bytes].as_bytes()).unwrap()
+        );
 
         written += num_bytes;
 
