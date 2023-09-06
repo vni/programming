@@ -1,5 +1,8 @@
+use epoll::{ControlOptions::*, Event, Events};
+use std::collections::HashMap;
 use std::io::{self, Read, Write};
 use std::net::TcpListener;
+use std::os::fd::AsRawFd;
 
 enum ConnectionState {
     Read {
@@ -14,49 +17,66 @@ enum ConnectionState {
 }
 
 fn main() {
-    let listener = TcpListener::bind("localhost:3000").unwrap();
-    listener
-        .set_nonblocking(true)
-        .expect("Failed to set_nonblocking(true) on a listener");
+    let epoll = epoll::create(false).unwrap();
 
+    let listener = TcpListener::bind("localhost:3000").unwrap();
+    listener.set_nonblocking(true).unwrap();
+
+    let event = Event::new(Events::EPOLLIN, listener.as_raw_fd() as _);
+    epoll::ctl(epoll, EPOLL_CTL_ADD, listener.as_raw_fd(), event).unwrap();
+
+    let mut connections = HashMap::new();
     let mut connection_counter = 0;
-    let mut connections = Vec::new();
 
     loop {
-        match listener.accept() {
-            Ok((connection, _)) => {
-                connection
-                    .set_nonblocking(true)
-                    .expect("Failed to set_nonblocking(true) on a connection");
-
-                let state = ConnectionState::Read {
-                    request: [0u8; 1024],
-                    read: 0,
-                };
-
-                connections.push((connection, state));
-            }
-            Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
-                // std::thread::sleep(std::time::Duration::from_millis(100));
-                // continue;
-            }
-            Err(e) => panic!("{e}"),
-        };
-
-        println!(
-            "main> new connection> connection_counter: {}",
-            connection_counter
-        );
-
+        let mut events = [Event::new(Events::empty(), 0); 1024];
+        // let timeout = -1;
+        let n_events = epoll::wait(epoll, 0 /* timeout */, &mut events).unwrap();
         let mut completed = Vec::new();
 
-        'next: for (i, (connection, state)) in connections.iter_mut().enumerate() {
+        'next: for event in &events[..n_events] {
+            let fd = event.data as i32;
+
+            if fd == listener.as_raw_fd() {
+                match listener.accept() {
+                    Ok((connection, _)) => {
+                        connection.set_nonblocking(true).unwrap();
+                        let fd = connection.as_raw_fd();
+
+                        let event = Event::new(Events::EPOLLIN | Events::EPOLLOUT, fd as _);
+                        epoll::ctl(epoll, EPOLL_CTL_ADD, fd, event).unwrap();
+
+                        let state = ConnectionState::Read {
+                            request: [0u8; 1024],
+                            read: 0,
+                        };
+
+                        connections.insert(fd, (connection, state));
+
+                        println!(
+                            "main> new connection> connection_counter: {}",
+                            connection_counter
+                        );
+                        connection_counter += 1;
+                    }
+                    Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+                        // std::thread::sleep(std::time::Duration::from_millis(100));
+                        // continue;
+                    }
+                    Err(e) => panic!("{e}"),
+                }
+
+                continue 'next;
+            }
+
+            let (connection, state) = connections.get_mut(&fd).unwrap();
+
             if let ConnectionState::Read { request, read } = state {
                 loop {
                     match connection.read(&mut request[*read..]) {
                         Ok(0) => {
                             println!("client disconnected unexpectedly");
-                            completed.push(i);
+                            completed.push(fd);
                             continue 'next;
                         }
                         Ok(n) => *read += n,
@@ -92,7 +112,7 @@ fn main() {
                     match connection.write(&response[*written..]) {
                         Ok(0) => {
                             println!("client disconnected unexpectedly");
-                            completed.push(i);
+                            completed.push(fd);
                             continue 'next;
                         }
                         Ok(n) => {
@@ -115,7 +135,7 @@ fn main() {
             if let ConnectionState::Flush = state {
                 match connection.flush() {
                     Ok(_) => {
-                        completed.push(i);
+                        completed.push(fd);
                     }
                     Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
                         continue 'next;
@@ -125,10 +145,9 @@ fn main() {
             }
         }
 
-        for i in completed.into_iter().rev() {
-            connections.remove(i);
+        for fd in &mut completed {
+            let (connection, _state) = connections.remove(&fd).unwrap();
+            drop(connection);
         }
-
-        connection_counter += 1;
     }
 }
